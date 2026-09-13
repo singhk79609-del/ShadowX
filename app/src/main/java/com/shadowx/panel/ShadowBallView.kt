@@ -19,7 +19,7 @@ class ShadowBallView(context: Context) : View(context) {
 
         val drawable =
             context.resources.getDrawable(
-                R.drawable.file_0000000063c48211a7ea944c693b3b04,
+                R.drawable.shadow_x_logo,
                 context.theme
             )
 
