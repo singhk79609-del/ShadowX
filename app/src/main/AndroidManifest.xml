@@ -5,6 +5,7 @@
 
     <application
         android:allowBackup="true"
+        android:icon="@drawable/shadow_x_logo"
         android:label="SHADOW X"
         android:supportsRtl="true"
         android:theme="@style/Theme.ShadowX">
