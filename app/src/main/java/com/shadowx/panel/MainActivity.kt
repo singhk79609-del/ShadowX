@@ -2,7 +2,6 @@ package com.shadowx.panel
 
 import android.annotation.SuppressLint
 import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -25,7 +24,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private lateinit var webView: WebView
     private lateinit var root: FrameLayout
-    private lateinit var floatingBall: TextView
+
+    private lateinit var floatingBall: ShadowBallView
     private lateinit var panel: LinearLayout
 
     private lateinit var statusText: TextView
@@ -36,24 +36,41 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private lateinit var tts: TextToSpeech
 
-    private val handler = Handler(Looper.getMainLooper())
+    private val handler =
+        Handler(Looper.getMainLooper())
 
+    /*
+     * Special permanently allowed numbers.
+     */
     private val allowedNumbers = setOf(
         "8800319125",
         "8800318888"
     )
 
-    private val preferencesName = "shadow_x_memory"
-    private val registeredNumbersKey = "registered_numbers"
+    /*
+     * Local SHADOW X registration memory.
+     */
+    private val preferencesName =
+        "shadow_x_memory"
+
+    private val registeredNumbersKey =
+        "registered_numbers"
 
     private var currentPhone = ""
+
     private var currentBalance = 0.0
+
     private var currentPeriod = ""
 
     private var panelVisible = false
-    private var processing = false
-    private var lastAnnouncedSuccessPhone = ""
 
+    private var processing = false
+
+    private var lastSuccessAnnouncementPhone = ""
+
+    /*
+     * 82 Winoo pages.
+     */
     private val registerUrl =
         "https://www.82winoo.com/#/register?invitationCode=782544845183"
 
@@ -61,31 +78,44 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         "https://www.82winoo.com/#/main"
 
     /*
-     * USER PROVIDED URL
+     * NOTE:
+     * WinGo_30S is the 30-second game.
      *
-     * WinGo_30S = 30 second game.
-     * If 1 minute is required, change WinGo_30S to WinGo_1M.
+     * If the actual required game is 1 minute,
+     * change WinGo_30S to WinGo_1M.
      */
     private val gameUrl =
         "https://www.82winoo.com/#/saasLottery/WinGo?gameCode=WinGo_30S&lottery=WinGo"
 
 
     @SuppressLint("SetJavaScriptEnabled")
-    override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(
+        savedInstanceState: Bundle?
+    ) {
         super.onCreate(savedInstanceState)
 
-        tts = TextToSpeech(this, this)
+        tts = TextToSpeech(
+            this,
+            this
+        )
 
         root = FrameLayout(this)
-        root.setBackgroundColor(Color.BLACK)
+
+        root.setBackgroundColor(
+            Color.BLACK
+        )
 
         setupWebView()
+
         setupFloatingBall()
+
         setupPanel()
 
         setContentView(root)
 
-        webView.loadUrl(registerUrl)
+        webView.loadUrl(
+            registerUrl
+        )
 
         startWebsiteMonitor()
 
@@ -100,29 +130,49 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         webView = WebView(this)
 
-        webView.settings.javaScriptEnabled = true
-        webView.settings.domStorageEnabled = true
-        webView.settings.databaseEnabled = true
-        webView.settings.allowFileAccess = true
-        webView.settings.allowContentAccess = true
-        webView.settings.javaScriptCanOpenWindowsAutomatically = true
-        webView.settings.loadsImagesAutomatically = true
+        webView.settings.javaScriptEnabled =
+            true
 
-        webView.webViewClient = object : WebViewClient() {
+        webView.settings.domStorageEnabled =
+            true
 
-            override fun onPageFinished(
-                view: WebView?,
-                url: String?
-            ) {
-                super.onPageFinished(view, url)
+        webView.settings.databaseEnabled =
+            true
 
-                injectWebsiteMonitor()
+        webView.settings.allowFileAccess =
+            true
 
-                handler.postDelayed({
+        webView.settings.allowContentAccess =
+            true
+
+        webView.settings.javaScriptCanOpenWindowsAutomatically =
+            true
+
+        webView.settings.loadsImagesAutomatically =
+            true
+
+        webView.webViewClient =
+            object : WebViewClient() {
+
+                override fun onPageFinished(
+                    view: WebView?,
+                    url: String?
+                ) {
+                    super.onPageFinished(
+                        view,
+                        url
+                    )
+
                     injectWebsiteMonitor()
-                }, 700)
+
+                    handler.postDelayed(
+                        {
+                            injectWebsiteMonitor()
+                        },
+                        500
+                    )
+                }
             }
-        }
 
         webView.addJavascriptInterface(
             WebsiteBridge(),
@@ -139,44 +189,31 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
 
+    /*
+     * Floating SHADOW X logo ball.
+     */
     private fun setupFloatingBall() {
 
-        floatingBall = TextView(this)
+        floatingBall =
+            ShadowBallView(this)
 
-        floatingBall.text = "SHADOW\nX"
-        floatingBall.textSize = 11f
-        floatingBall.setTextColor(Color.WHITE)
-        floatingBall.gravity = Gravity.CENTER
+        floatingBall.elevation =
+            dp(15).toFloat()
 
-        floatingBall.setTypeface(
-            null,
-            android.graphics.Typeface.BOLD
-        )
-
-        val drawable = GradientDrawable()
-
-        drawable.shape = GradientDrawable.OVAL
-        drawable.setColor(Color.rgb(20, 0, 0))
-        drawable.setStroke(
-            dp(3),
-            Color.RED
-        )
-
-        floatingBall.background = drawable
-        floatingBall.elevation = dp(12).toFloat()
-
-        val params = FrameLayout.LayoutParams(
-            dp(70),
-            dp(70)
-        )
+        val params =
+            FrameLayout.LayoutParams(
+                dp(82),
+                dp(82)
+            )
 
         params.gravity =
-            Gravity.END or Gravity.CENTER_VERTICAL
+            Gravity.END or
+                    Gravity.CENTER_VERTICAL
 
         params.setMargins(
             0,
             0,
-            dp(12),
+            dp(10),
             0
         )
 
@@ -188,16 +225,22 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         enableDragging()
 
         floatingBall.setOnClickListener {
+
             showPanel()
         }
     }
 
 
+    /*
+     * Main SHADOW X panel.
+     */
     private fun setupPanel() {
 
-        panel = LinearLayout(this)
+        panel =
+            LinearLayout(this)
 
-        panel.orientation = LinearLayout.VERTICAL
+        panel.orientation =
+            LinearLayout.VERTICAL
 
         panel.setPadding(
             dp(16),
@@ -206,10 +249,15 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             dp(14)
         )
 
-        val background = GradientDrawable()
+        val background =
+            android.graphics.drawable.GradientDrawable()
 
         background.setColor(
-            Color.rgb(10, 5, 5)
+            Color.rgb(
+                10,
+                5,
+                5
+            )
         )
 
         background.setStroke(
@@ -220,30 +268,45 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         background.cornerRadius =
             dp(18).toFloat()
 
-        panel.background = background
-        panel.elevation = dp(20).toFloat()
+        panel.background =
+            background
 
-        val params = FrameLayout.LayoutParams(
-            dp(300),
-            FrameLayout.LayoutParams.WRAP_CONTENT
-        )
+        panel.elevation =
+            dp(20).toFloat()
 
-        params.gravity = Gravity.CENTER
+        val panelParams =
+            FrameLayout.LayoutParams(
+                dp(310),
+                FrameLayout.LayoutParams.WRAP_CONTENT
+            )
+
+        panelParams.gravity =
+            Gravity.CENTER
 
         root.addView(
             panel,
-            params
+            panelParams
         )
 
-        panel.visibility = View.GONE
+        panel.visibility =
+            View.GONE
 
 
-        val title = TextView(this)
+        val title =
+            TextView(this)
 
-        title.text = "SHADOW X"
-        title.textSize = 23f
-        title.setTextColor(Color.RED)
-        title.gravity = Gravity.CENTER
+        title.text =
+            "SHADOW X"
+
+        title.textSize =
+            23f
+
+        title.setTextColor(
+            Color.RED
+        )
+
+        title.gravity =
+            Gravity.CENTER
 
         title.setTypeface(
             null,
@@ -260,25 +323,43 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
 
         statusText =
-            makeText("REGISTER FIRST", 16f)
+            makeText(
+                "REGISTER FIRST",
+                16f
+            )
 
-        panel.addView(statusText)
+        panel.addView(
+            statusText
+        )
 
 
         periodText =
-            makeText("PERIOD: --", 14f)
+            makeText(
+                "PERIOD: --",
+                14f
+            )
 
-        panel.addView(periodText)
+        panel.addView(
+            periodText
+        )
 
 
         balanceText =
-            makeText("BALANCE: ₹0.00", 14f)
+            makeText(
+                "BALANCE: ₹0.00",
+                14f
+            )
 
-        panel.addView(balanceText)
+        panel.addView(
+            balanceText
+        )
 
 
         resultText =
-            makeText("RESULT: --", 20f)
+            makeText(
+                "RESULT: --",
+                20f
+            )
 
         panel.addView(
             resultText,
@@ -289,9 +370,11 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         )
 
 
-        actionButton = Button(this)
+        actionButton =
+            Button(this)
 
-        actionButton.text = "REGISTER"
+        actionButton.text =
+            "REGISTER"
 
         panel.addView(
             actionButton,
@@ -302,9 +385,11 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         )
 
 
-        val hideButton = Button(this)
+        val hideButton =
+            Button(this)
 
-        hideButton.text = "HIDE"
+        hideButton.text =
+            "HIDE"
 
         panel.addView(
             hideButton,
@@ -317,45 +402,67 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         actionButton.setOnClickListener {
 
-            /*
-             * IMPORTANT:
-             * Never execute prediction for an unauthorized number.
-             */
-
-            if (currentPhone.isEmpty()) {
-
-                webView.loadUrl(registerUrl)
-                return@setOnClickListener
-            }
-
-
-            if (!isPhoneAuthorized(currentPhone)) {
-
-                webView.loadUrl(registerUrl)
-
-                speak(
-                    "आपने रजिस्टर बायपास करने की कोशिश की है, कृपया नया अकाउंट बनाएँ।"
-                )
-
-                return@setOnClickListener
-            }
-
-
-            if (currentBalance < 100.0) {
-
-                openDeposit()
-
-                return@setOnClickListener
-            }
-
-
-            executePrediction()
+            handleActionButton()
         }
 
 
         hideButton.setOnClickListener {
+
             hidePanel()
         }
+    }
+
+
+    private fun handleActionButton() {
+
+        /*
+         * Not logged in / phone not detected.
+         */
+        if (currentPhone.isEmpty()) {
+
+            webView.loadUrl(
+                registerUrl
+            )
+
+            return
+        }
+
+
+        /*
+         * Phone exists but SHADOW X has not
+         * authorized it.
+         */
+        if (
+            !isPhoneAuthorized(
+                currentPhone
+            )
+        ) {
+
+            webView.loadUrl(
+                registerUrl
+            )
+
+            speak(
+                "आपने रजिस्टर बायपास करने की कोशिश की है, कृपया नया अकाउंट बनाएँ।"
+            )
+
+            return
+        }
+
+
+        /*
+         * Authorized but balance below
+         * prediction threshold.
+         */
+        if (currentBalance < 100.0) {
+
+            openDeposit()
+
+            return
+        }
+
+
+        executePrediction()
     }
 
 
@@ -364,12 +471,21 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         size: Float
     ): TextView {
 
-        val view = TextView(this)
+        val view =
+            TextView(this)
 
-        view.text = text
-        view.textSize = size
-        view.setTextColor(Color.WHITE)
-        view.gravity = Gravity.CENTER
+        view.text =
+            text
+
+        view.textSize =
+            size
+
+        view.setTextColor(
+            Color.WHITE
+        )
+
+        view.gravity =
+            Gravity.CENTER
 
         view.setPadding(
             0,
@@ -384,7 +500,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun showPanel() {
 
-        panelVisible = true
+        panelVisible =
+            true
 
         floatingBall.visibility =
             View.GONE
@@ -398,7 +515,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun hidePanel() {
 
-        panelVisible = false
+        panelVisible =
+            false
 
         panel.visibility =
             View.GONE
@@ -410,6 +528,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun refreshPanel() {
 
+        /*
+         * No phone detected.
+         */
         if (currentPhone.isEmpty()) {
 
             statusText.text =
@@ -431,7 +552,14 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
 
 
-        if (!isPhoneAuthorized(currentPhone)) {
+        /*
+         * Phone detected but unauthorized.
+         */
+        if (
+            !isPhoneAuthorized(
+                currentPhone
+            )
+        ) {
 
             statusText.text =
                 "ACCESS DENIED"
@@ -452,12 +580,17 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
 
 
+        /*
+         * Authorized user.
+         */
         statusText.text =
             "SHADOW X ACTIVE"
 
 
         periodText.text =
-            if (currentPeriod.isEmpty()) {
+            if (
+                currentPeriod.isEmpty()
+            ) {
                 "PERIOD: --"
             } else {
                 "PERIOD: $currentPeriod"
@@ -470,6 +603,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             )
 
 
+        /*
+         * Prediction gate.
+         */
         if (currentBalance < 100.0) {
 
             actionButton.text =
@@ -481,15 +617,19 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         } else {
 
             actionButton.text =
-                if (processing)
+                if (processing) {
                     "WAIT"
-                else
+                } else {
                     "EXECUTE"
+                }
 
-            if (!processing &&
+            if (
+                !processing &&
                 !resultText.text
                     .toString()
-                    .startsWith("AI RESULT")
+                    .startsWith(
+                        "AI RESULT"
+                    )
             ) {
 
                 resultText.text =
@@ -499,9 +639,16 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
 
+    /*
+     * Execute current-period calculation.
+     */
     private fun executePrediction() {
 
-        if (!isPhoneAuthorized(currentPhone)) {
+        if (
+            !isPhoneAuthorized(
+                currentPhone
+            )
+        ) {
             return
         }
 
@@ -514,24 +661,25 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
 
 
+        /*
+         * If period is missing, open the
+         * actual WinGo page.
+         */
         if (currentPeriod.isEmpty()) {
 
             resultText.text =
                 "PERIOD NOT FOUND"
 
-            /*
-             * Go directly to the actual WinGo page
-             * so the next monitor cycle can read
-             * the current period.
-             */
-
-            webView.loadUrl(gameUrl)
+            webView.loadUrl(
+                gameUrl
+            )
 
             return
         }
 
 
-        processing = true
+        processing =
+            true
 
         actionButton.text =
             "WAIT"
@@ -539,27 +687,42 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         resultText.text =
             "PROCESSING..."
 
+
+        /*
+         * Fresh calculation after a short
+         * processing animation.
+         */
         handler.postDelayed({
 
             if (isFinishing) {
                 return@postDelayed
             }
 
+
+            val periodAtExecution =
+                currentPeriod
+
+
             val number =
-                calculateNumber(currentPeriod)
+                calculateNumber(
+                    periodAtExecution
+                )
 
 
             val size =
-                if (number <= 4)
+                if (number <= 4) {
                     "SMALL"
-                else
+                } else {
                     "BIG"
+                }
 
 
             resultText.text =
                 "AI RESULT $size $number"
 
-            processing = false
+
+            processing =
+                false
 
             actionButton.text =
                 "EXECUTE"
@@ -568,49 +731,59 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
 
+    /*
+     * Sum all period digits repeatedly
+     * until one digit remains.
+     */
     private fun calculateNumber(
         period: String
     ): Int {
 
-        var sum = 0
+        var sum =
+            0
 
         period.forEach { char ->
 
             if (char.isDigit()) {
-                sum += char.digitToInt()
+
+                sum +=
+                    char.digitToInt()
             }
         }
 
 
         while (sum >= 10) {
 
-            var next = 0
+            var next =
+                0
 
             sum.toString().forEach { char ->
 
-                next += char.digitToInt()
+                next +=
+                    char.digitToInt()
             }
 
-            sum = next
+            sum =
+                next
         }
+
 
         return sum
     }
 
 
+    /*
+     * Ask the 82 Winoo website to open
+     * its own Deposit section.
+     */
     private fun openDeposit() {
-
-        /*
-         * Ask the website to click its own
-         * Deposit button.
-         */
 
         val script = """
             (function() {
 
                 var elements =
                     document.querySelectorAll(
-                        'button,a,div,span'
+                        'button,a,[role="button"],div,span'
                     );
 
                 for (
@@ -620,7 +793,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 ) {
 
                     var text =
-                        (elements[i].innerText || '')
+                        (
+                            elements[i].innerText || ''
+                        )
                         .trim()
                         .toLowerCase();
 
@@ -638,6 +813,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             })();
         """.trimIndent()
 
+
         webView.evaluateJavascript(
             script,
             null
@@ -645,6 +821,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
 
+    /*
+     * Monitor the SPA every second.
+     */
     private fun startWebsiteMonitor() {
 
         handler.post(
@@ -667,6 +846,10 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
 
+    /*
+     * Read website information according
+     * to the current 82 Winoo route.
+     */
     private fun injectWebsiteMonitor() {
 
         val script = """
@@ -686,7 +869,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     /*
                      * PHONE
                      */
-
                     var phoneRegex =
                         /\b[6-9][0-9]{9}\b/g;
 
@@ -705,20 +887,39 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
 
                     /*
-                     * CURRENT PERIOD
-                     *
-                     * Only read period on the
-                     * actual WinGo page.
+                     * BALANCE ONLY FROM MAIN PAGE.
                      */
-
                     if (
-                        url.includes(
+                        url.indexOf('/main') !== -1
+                    ) {
+
+                        var balance =
+                            findBalance(body);
+
+                        if (
+                            balance !== null
+                        ) {
+
+                            ShadowXBridge.balance(
+                                balance
+                            );
+                        }
+                    }
+
+
+                    /*
+                     * PERIOD ONLY FROM WinGo PAGE.
+                     */
+                    if (
+                        url.indexOf(
                             '/saasLottery/WinGo'
-                        )
+                        ) !== -1
                     ) {
 
                         var period =
-                            findCurrentPeriod(body);
+                            findCurrentPeriod(
+                                body
+                            );
 
                         if (period) {
 
@@ -730,34 +931,11 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
 
                     /*
-                     * BALANCE
-                     *
-                     * Only read balance from
-                     * the main page.
+                     * Access denied detection.
                      */
-
-                    if (
-                        url.includes('/main')
-                    ) {
-
-                        var balance =
-                            findBalance(body);
-
-                        if (balance !== null) {
-
-                            ShadowXBridge.balance(
-                                balance
-                            );
-                        }
-                    }
-
-
-                    /*
-                     * ACCESS DENIED
-                     */
-
                     var lower =
                         body.toLowerCase();
+
 
                     if (
                         lower.includes(
@@ -773,9 +951,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
 
                     /*
-                     * REGISTRATION / LOGIN
+                     * Registration/login success.
                      */
-
                     if (
                         lower.includes(
                             'registration successful'
@@ -796,18 +973,19 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
 
                     /*
-                     * Keep checking SPA route
-                     * changes even when the page
-                     * itself does not reload.
+                     * Detect SPA route changes.
                      */
-
                     setTimeout(
                         function() {
+
                             try {
+
                                 ShadowXBridge.route(
                                     window.location.href
                                 );
+
                             } catch(e) {}
+
                         },
                         50
                     );
@@ -815,24 +993,26 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 } catch(e) {}
 
 
+                /*
+                 * Find current period.
+                 */
                 function findCurrentPeriod(text) {
 
                     var lines =
                         text
                         .split('\\n')
-                        .map(function(x) {
-                            return x.trim();
+                        .map(function(line) {
+                            return line.trim();
                         })
-                        .filter(function(x) {
-                            return x.length > 0;
+                        .filter(function(line) {
+                            return line.length > 0;
                         });
 
 
                     /*
-                     * First preference:
-                     * line near "current period".
+                     * Prefer text close to
+                     * Current Period / Period.
                      */
-
                     for (
                         var i = 0;
                         i < lines.length;
@@ -842,20 +1022,21 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                         var lower =
                             lines[i].toLowerCase();
 
+
                         if (
                             lower.includes(
                                 'current period'
                             ) ||
-                            lower === 'period' ||
                             lower.includes(
                                 'current issue'
-                            )
+                            ) ||
+                            lower === 'period'
                         ) {
 
                             for (
                                 var j = i;
                                 j < Math.min(
-                                    i + 4,
+                                    i + 5,
                                     lines.length
                                 );
                                 j++
@@ -863,10 +1044,12 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
                                 var match =
                                     lines[j].match(
-                                        /\\b[0-9]{10,25}\\b/
+                                        /\b[0-9]{10,25}\b/
                                     );
 
+
                                 if (match) {
+
                                     return match[0];
                                 }
                             }
@@ -875,37 +1058,41 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
 
                     /*
-                     * Second preference:
-                     * common long period number.
+                     * Fallback:
+                     * look for long numeric values.
                      */
-
-                    var all =
+                    var candidates =
                         text.match(
-                            /\\b[0-9]{15,25}\\b/g
+                            /\b[0-9]{15,25}\b/g
                         );
 
+
                     if (
-                        all &&
-                        all.length > 0
+                        candidates &&
+                        candidates.length > 0
                     ) {
 
-                        return all[0];
+                        return candidates[0];
                     }
+
 
                     return null;
                 }
 
 
+                /*
+                 * Find wallet/balance value.
+                 */
                 function findBalance(text) {
 
                     var lines =
                         text
                         .split('\\n')
-                        .map(function(x) {
-                            return x.trim();
+                        .map(function(line) {
+                            return line.trim();
                         })
-                        .filter(function(x) {
-                            return x.length > 0;
+                        .filter(function(line) {
+                            return line.length > 0;
                         });
 
 
@@ -920,32 +1107,29 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
 
                         if (
-                            lower.includes('balance') ||
-                            lower.includes('wallet')
+                            lower.includes(
+                                'balance'
+                            ) ||
+                            lower.includes(
+                                'wallet'
+                            )
                         ) {
 
-                            /*
-                             * Check current line.
-                             */
-
-                            var match =
+                            var sameLine =
                                 lines[i].match(
                                     /(?:₹|rs\\.?|inr)?\\s*([0-9][0-9,]*(?:\\.[0-9]+)?)/i
                                 );
 
-                            if (match) {
 
-                                return match[1]
+                            if (sameLine) {
+
+                                return sameLine[1]
                                     .replace(
                                         /,/g,
                                         ''
                                     );
                             }
 
-
-                            /*
-                             * Check next few lines.
-                             */
 
                             for (
                                 var j = i + 1;
@@ -956,14 +1140,15 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                                 j++
                             ) {
 
-                                var nextMatch =
+                                var next =
                                     lines[j].match(
                                         /(?:₹|rs\\.?|inr)?\\s*([0-9][0-9,]*(?:\\.[0-9]+)?)/i
                                     );
 
-                                if (nextMatch) {
 
-                                    return nextMatch[1]
+                                if (next) {
+
+                                    return next[1]
                                         .replace(
                                             /,/g,
                                             ''
@@ -991,7 +1176,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     inner class WebsiteBridge {
 
         @JavascriptInterface
-        fun phone(number: String) {
+        fun phone(
+            number: String
+        ) {
 
             runOnUiThread {
 
@@ -1000,7 +1187,10 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                         it.isDigit()
                     }
 
-                if (clean.length == 10) {
+
+                if (
+                    clean.length == 10
+                ) {
 
                     currentPhone =
                         clean
@@ -1012,7 +1202,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
 
         @JavascriptInterface
-        fun balance(value: String) {
+        fun balance(
+            value: String
+        ) {
 
             runOnUiThread {
 
@@ -1022,8 +1214,10 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                         ""
                     )
 
+
                 val parsed =
                     clean.toDoubleOrNull()
+
 
                 if (parsed != null) {
 
@@ -1037,7 +1231,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
 
         @JavascriptInterface
-        fun period(value: String) {
+        fun period(
+            value: String
+        ) {
 
             runOnUiThread {
 
@@ -1045,6 +1241,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     value.filter {
                         it.isDigit()
                     }
+
 
                 if (
                     clean.length >= 10 &&
@@ -1061,15 +1258,16 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
 
         @JavascriptInterface
-        fun route(url: String) {
+        fun route(
+            url: String
+        ) {
 
             runOnUiThread {
 
                 /*
-                 * Route changed inside SPA.
-                 * Refresh monitor immediately.
+                 * SPA route changed.
+                 * Read the new page immediately.
                  */
-
                 injectWebsiteMonitor()
             }
         }
@@ -1083,21 +1281,44 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 if (
                     currentPhone.isNotEmpty() &&
                     currentPhone !=
-                    lastAnnouncedSuccessPhone
+                    lastSuccessAnnouncementPhone
                 ) {
 
+                    /*
+                     * Save the number permanently
+                     * in local SHADOW X memory.
+                     */
                     saveRegisteredNumber(
                         currentPhone
                     )
 
-                    lastAnnouncedSuccessPhone =
+
+                    lastSuccessAnnouncementPhone =
                         currentPhone
+
 
                     speak(
                         "हैक को एक्टिव करने के लिए मिनिमम 300 का डिपॉजिट करें।"
                     )
 
+
                     refreshPanel()
+
+
+                    /*
+                     * Move to main page so balance
+                     * can be read.
+                     */
+                    handler.postDelayed({
+
+                        if (!isFinishing) {
+
+                            webView.loadUrl(
+                                mainUrl
+                            )
+                        }
+
+                    }, 700)
                 }
             }
         }
@@ -1108,17 +1329,24 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
             runOnUiThread {
 
-                if (currentPhone.isNotEmpty()) {
+                if (
+                    currentPhone.isNotEmpty()
+                ) {
 
                     speak(
                         "आपने रजिस्टर बायपास करने की कोशिश की है, कृपया नया अकाउंट बनाएँ।"
                     )
                 }
 
-                currentPhone = ""
 
-                currentBalance = 0.0
-                currentPeriod = ""
+                currentPhone =
+                    ""
+
+                currentBalance =
+                    0.0
+
+                currentPeriod =
+                    ""
 
                 refreshPanel()
             }
@@ -1126,6 +1354,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
 
+    /*
+     * Check SHADOW X authorization.
+     */
     private fun isPhoneAuthorized(
         number: String
     ): Boolean {
@@ -1133,15 +1364,22 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         return allowedNumbers.contains(
             number
         ) ||
-        isRegisteredNumber(number)
+        isRegisteredNumber(
+            number
+        )
     }
 
 
+    /*
+     * Save registered phone locally.
+     */
     private fun saveRegisteredNumber(
         number: String
     ) {
 
-        if (number.isEmpty()) {
+        if (
+            number.isEmpty()
+        ) {
             return
         }
 
@@ -1157,11 +1395,14 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             prefs.getStringSet(
                 registeredNumbersKey,
                 emptySet()
-            )?.toMutableSet()
+            )
+                ?.toMutableSet()
                 ?: mutableSetOf()
 
 
-        existing.add(number)
+        existing.add(
+            number
+        )
 
 
         prefs.edit()
@@ -1173,6 +1414,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
 
+    /*
+     * Check locally saved numbers.
+     */
     private fun isRegisteredNumber(
         number: String
     ): Boolean {
@@ -1197,13 +1441,22 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
 
+    /*
+     * Drag the floating logo around the screen.
+     */
     private fun enableDragging() {
 
-        var downX = 0f
-        var downY = 0f
+        var downX =
+            0f
 
-        var startX = 0f
-        var startY = 0f
+        var downY =
+            0f
+
+        var startX =
+            0f
+
+        var startY =
+            0f
 
 
         floatingBall.setOnTouchListener {
@@ -1226,17 +1479,19 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     startY =
                         view.y
 
-                    false
+                    true
                 }
 
 
                 MotionEvent.ACTION_MOVE -> {
 
                     val dx =
-                        event.rawX - downX
+                        event.rawX -
+                                downX
 
                     val dy =
-                        event.rawY - downY
+                        event.rawY -
+                                downY
 
 
                     view.x =
@@ -1252,10 +1507,12 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 MotionEvent.ACTION_UP -> {
 
                     val dx =
-                        event.rawX - downX
+                        event.rawX -
+                                downX
 
                     val dy =
-                        event.rawY - downY
+                        event.rawY -
+                                downY
 
 
                     if (
@@ -1265,6 +1522,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
                         view.performClick()
                     }
+
 
                     true
                 }
@@ -1280,7 +1538,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         text: String
     ) {
 
-        if (::tts.isInitialized) {
+        if (
+            ::tts.isInitialized
+        ) {
 
             tts.speak(
                 text,
@@ -1316,8 +1576,10 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         return (
             value *
-            resources.displayMetrics.density
-        ).toInt()
+                    resources
+                        .displayMetrics
+                        .density
+            ).toInt()
     }
 
 
@@ -1350,9 +1612,12 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         )
 
 
-        if (::tts.isInitialized) {
+        if (
+            ::tts.isInitialized
+        ) {
 
             tts.stop()
+
             tts.shutdown()
         }
 
